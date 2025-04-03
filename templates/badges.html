@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gestion des badges</title>
+</head>
+<body>
+    <h1>Gestion des badges</h1>
+
+    <div id="scanSection" style="display: none;">
+        <p>Scannez votre badge...</p>
+        <button onclick="cancelScan()">Annuler</button>
+    </div>
+
+    <div id="addSection">
+        <button onclick="startScan()">Scanner un badge</button>
+    </div>
+
+    <h2>Liste des badges enregistrés</h2>
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>UID</th>
+            <th>Description</th>
+            <th>Statut</th>
+        </tr>
+        {% for badge in badges %}
+        <tr>
+            <td>{{ badge.id }}</td>
+            <td>{{ badge.uid }}</td>
+            <td>{{ badge.description or 'Non défini' }}</td>
+            <td>{% if badge.is_authorized %}Autorisé{% else %}Non autorisé{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <script>
+        let scanTimeout;
+        let checkInterval;
+        let lastScannedBadge = null;
+
+        function startScan() {
+            document.getElementById('scanSection').style.display = 'block';
+            document.getElementById('addSection').style.display = 'none';
+            
+            // On attend 30 secondes maximum pour le scan
+            scanTimeout = setTimeout(() => {
+                cancelScan();
+                alert('Délai dépassé. Veuillez réessayer.');
+            }, 30000);
+
+            // On vérifie périodiquement si un badge a été scanné
+            checkInterval = setInterval(checkLastScan, 1000);
+        }
+
+        function cancelScan() {
+            clearTimeout(scanTimeout);
+            clearInterval(checkInterval);
+            document.getElementById('scanSection').style.display = 'none';
+            document.getElementById('addSection').style.display = 'block';
+        }
+
+        async function checkLastScan() {
+            try {
+                const response = await fetch('/last_scan');
+                const data = await response.json();
+                
+                if (data.uid && data.uid !== lastScannedBadge) {
+                    lastScannedBadge = data.uid;
+                    clearInterval(checkInterval);
+                    clearTimeout(scanTimeout);
+                    
+                    const description = prompt("Badge scanné ! Entrez une description :", "");
+                    if (description !== null) {
+                        addBadge(data.uid, description);
+                    } else {
+                        cancelScan();
+                    }
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        async function addBadge(uid, description) {
+            try {
+                const response = await fetch('/badges/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: uid,
+                        description: description,
+                        is_authorized: true
+                    }),
+                });
+
+                if (response.ok) {
+                    alert('Badge ajouté avec succès !');
+                    // Recharger la page pour voir le nouveau badge
+                    location.reload();
+                } else {
+                    alert('Erreur lors de l\'ajout du badge');
+                }
+            } catch (error) {
+                alert('Erreur lors de l\'ajout du badge');
+            } finally {
+                cancelScan();
+            }
+        }
+    </script>
+</body>
+</html>

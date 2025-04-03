@@ -37,8 +37,8 @@
     
     <script>
         function sendFixedMessage() {
-            const topic = "mon/topic";
-            const message = "Test message";
+            const topic = "response";
+            const message = "test";
                         
             fetch('/publish', {
                 method: 'POST',
@@ -50,7 +50,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('Message envoyé avec succès !');
+                    alert('Message \'true\' envoyé avec succès sur le topic \'response\' !');
                 } else {
                     alert('Erreur lors de l\'envoi du message : ' + data.error);
                 }
