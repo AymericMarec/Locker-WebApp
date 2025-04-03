@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+
+{% block title %}Badges RFID - Système de Gestion RFID{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Badges RFID</h1>
+        
+        <div>
+            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addBadgeModal">
+                <i class="fas fa-plus me-1"></i> Ajouter un badge
+            </button>
+        </div>
+    </div>
+    
+    <!-- Tableau des badges -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover datatable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Badge ID</th>
+                            <th>Nom</th>
+                            <th>Statut</th>
+                            <th>Utilisateur</th>
+                            <th>Date de création</th>
+                            <th>Dernière utilisation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for badge in badges.items %}
+                        <tr>
+                            <td>{{ badge.id }}</td>
+                            <td>
+                                <span class="badge bg-secondary">{{ badge.badge_id }}</span>
+                            </td>
+                            <td>{{ badge.name }}</td>
+                            <td>
+                                {% if badge.is_active %}
+                                <span class="badge bg-success">Actif</span>
+                                {% else %}
+                                <span class="badge bg-danger">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ badge.user.username if badge.user else "Non attribué" }}</td>
+                            <td>{{ badge.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ badge.last_used.strftime('%d/%m/%Y %H:%M') if badge.last_used else "Jamais" }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editBadgeModal{{ badge.id }}">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteBadgeModal{{ badge.id }}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Modal d'édition -->
+                        <div class="modal fade" id="editBadgeModal{{ badge.id }}" tabindex="-1" aria-labelledby="editBadgeModalLabel{{ badge.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="editBadgeModalLabel{{ badge.id }}">Modifier le badge</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form>
+                                            <div class="mb-3">
+                                                <label for="badge_id{{ badge.id }}" class="form-label">Badge ID</label>
+                                                <input type="text" class="form-control" id="badge_id{{ badge.id }}" value="{{ badge.badge_id }}" readonly>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="badge_name{{ badge.id }}" class="form-label">Nom</label>
+                                                <input type="text" class="form-control" id="badge_name{{ badge.id }}" value="{{ badge.name }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <div class="form-check form-switch">
+                                                    <input class="form-check-input" type="checkbox" id="badge_active{{ badge.id }}" {% if badge.is_active %}checked{% endif %}>
+                                                    <label class="form-check-label" for="badge_active{{ badge.id }}">Actif</label>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="badge_user{{ badge.id }}" class="form-label">Utilisateur</label>
+                                                <select class="form-select" id="badge_user{{ badge.id }}">
+                                                    <option value="">Non attribué</option>
+                                                    <!-- Options des utilisateurs -->
+                                                </select>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <button type="button" class="btn btn-primary">Enregistrer</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Modal de suppression -->
+                        <div class="modal fade" id="deleteBadgeModal{{ badge.id }}" tabindex="-1" aria-labelledby="deleteBadgeModalLabel{{ badge.id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="deleteBadgeModalLabel{{ badge.id }}">Confirmer la suppression</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>Êtes-vous sûr de vouloir supprimer le badge <strong>{{ badge.name }}</strong> ({{ badge.badge_id }}) ?</p>
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i> Cette action est irréversible.
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <button type="button" class="btn btn-danger">Supprimer</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if badges.items|length == 0 %}
+                        <tr>
+                            <td colspan="8" class="text-center">Aucun badge RFID trouvé</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    <li class="page-item {% if not badges.has_prev %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.badges', page=badges.prev_num) if badges.has_prev else '#' }}">Précédent</a>
+                    </li>
+                    
+                    {% for page_num in badges.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {% if page_num == badges.page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('main.badges', page=page_num) }}">{{ page_num }}</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <li class="page-item {% if not badges.has_next %}disabled{% endif %}">
+                        <a class="page-link" href="{{ url_for('main.badges', page=badges.next_num) if badges.has_next else '#' }}">Suivant</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    
+    <!-- Modal d'ajout de badge -->
+    <div class="modal fade" id="addBadgeModal" tabindex="-1" aria-labelledby="addBadgeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBadgeModalLabel">Ajouter un nouveau badge</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="new_badge_id" class="form-label">Badge ID</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="new_badge_id" placeholder="Entrez l'ID du badge">
+                                <button class="btn btn-outline-secondary" type="button" id="scanButton">
+                                    <i class="fas fa-wifi"></i> Scanner
+                                </button>
+                            </div>
+                            <div class="form-text">Scannez un badge RFID ou entrez son ID manuellement.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_badge_name" class="form-label">Nom</label>
+                            <input type="text" class="form-control" id="new_badge_name" placeholder="Nom du badge">
+                        </div>
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="new_badge_active" checked>
+                                <label class="form-check-label" for="new_badge_active">Actif</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new_badge_user" class="form-label">Utilisateur</label>
+                            <select class="form-select" id="new_badge_user">
+                                <option value="" selected>Non attribué</option>
+                                <!-- Options des utilisateurs -->
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-success">Ajouter</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
