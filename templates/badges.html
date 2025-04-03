@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gestion des badges</title>
+    <title>Scanner un badge</title>
 </head>
 <body>
-    <h1>Gestion des badges</h1>
-
     <div id="scanSection" style="display: none;">
         <p>Scannez votre badge...</p>
         <button onclick="cancelScan()">Annuler</button>
@@ -14,24 +12,6 @@
     <div id="addSection">
         <button onclick="startScan()">Scanner un badge</button>
     </div>
-
-    <h2>Liste des badges enregistrés</h2>
-    <table border="1">
-        <tr>
-            <th>ID</th>
-            <th>UID</th>
-            <th>Description</th>
-            <th>Statut</th>
-        </tr>
-        {% for badge in badges %}
-        <tr>
-            <td>{{ badge.id }}</td>
-            <td>{{ badge.uid }}</td>
-            <td>{{ badge.description or 'Non défini' }}</td>
-            <td>{% if badge.is_authorized %}Autorisé{% else %}Non autorisé{% endif %}</td>
-        </tr>
-        {% endfor %}
-    </table>
 
     <script>
         let scanTimeout;
@@ -97,8 +77,6 @@
 
                 if (response.ok) {
                     alert('Badge ajouté avec succès !');
-                    // Recharger la page pour voir le nouveau badge
-                    location.reload();
                 } else {
                     alert('Erreur lors de l\'ajout du badge');
                 }
