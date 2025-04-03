@@ -1,0 +1,18 @@
+1743666221: mosquitto version 2.0.21 starting
+1743666221: Config loaded from /mosquitto/config/mosquitto.conf.
+1743666221: Opening ipv4 listen socket on port 1883.
+1743666221: Opening ipv6 listen socket on port 1883.
+1743666221: Opening websockets listen socket on port 9001.
+1743666221: mosquitto version 2.0.21 running
+1743666366: New connection from 172.22.0.1:46978 on port 1883.
+1743666366: New client connected from 172.22.0.1:46978 as auto-7972F6A6-CDC8-6CFC-E159-2A51D73D6DB1 (p5, c1, k60).
+1743666366: No will message specified.
+1743666366: Sending CONNACK to auto-7972F6A6-CDC8-6CFC-E159-2A51D73D6DB1 (0, 0)
+1743666366: New connection from 172.22.0.1:46990 on port 1883.
+1743666366: New client connected from 172.22.0.1:46990 as auto-46E144D9-CE1B-85FE-1A9A-C29151527AC6 (p5, c1, k60).
+1743666366: No will message specified.
+1743666366: Sending CONNACK to auto-46E144D9-CE1B-85FE-1A9A-C29151527AC6 (0, 0)
+1743666419: Client auto-46E144D9-CE1B-85FE-1A9A-C29151527AC6 closed its connection.
+1743666419: Client auto-7972F6A6-CDC8-6CFC-E159-2A51D73D6DB1 closed its connection.
+1743666424: mosquitto version 2.0.21 terminating
+1743666424: Saving in-memory database to /mosquitto/data//mosquitto.db.
