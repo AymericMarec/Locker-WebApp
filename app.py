@@ -36,9 +36,9 @@ def generate_password(length=12):
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 # Création du mot de passe au démarrage
-PASSWORD = generate_password()
+PASSWORD = "IjqgVZldHWol"
 print(f"\n{'='*50}")
-print(f"Mot de passe généré : {PASSWORD}")
+print(f"Mot de passe : {PASSWORD}")
 print(f"{'='*50}\n")
 
 # Modèle de données pour les badges
