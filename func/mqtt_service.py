@@ -5,13 +5,11 @@ from app import app
 from models.badge import Badge
 from extensions import db
 
-# Configuration MQTT
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_SCAN = "scan"
 MQTT_TOPIC_RESPONSE = "response"
 
-# Variables globales
 last_scan = None
 last_scan_time = 0
 last_processed_payload = None
@@ -40,18 +38,15 @@ def on_message(client, userdata, msg):
         last_processed_time = current_time
         
         if msg.topic == MQTT_TOPIC_SCAN:
-            # Utiliser directement le payload comme UID
             uid = payload
             last_scan = uid
             last_scan_time = time.time()
             print(f"Badge scanné: {uid}")
             
-            # Vérifier l'autorisation du badge
             with app.app_context():
                 badge = Badge.query.filter_by(uid=uid).first()
                 is_authorized = badge.is_authorized if badge else False
                 
-                # Publier une réponse sur le topic response
                 response = "true" if is_authorized else "false"
                 client.publish(MQTT_TOPIC_RESPONSE, response, qos=1)
                 print(f"Réponse envoyée sur {MQTT_TOPIC_RESPONSE}: {response}")
@@ -76,7 +71,6 @@ def get_last_scan():
     global last_scan, last_scan_time
     current_time = time.time()
     
-    # Si le dernier scan date de plus de 5 secondes, on le considère comme expiré
     if current_time - last_scan_time > 5:
         last_scan = None
     

@@ -1,4 +1,0 @@
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
-MQTT_TOPIC_SCAN = "scan"
-MQTT_TOPIC_RESPONSE = "response" 
