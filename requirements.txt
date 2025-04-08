@@ -7,4 +7,8 @@ SQLAlchemy==2.0.20
 Werkzeug==2.3.7
 Flask-Migrate==4.0.4
 email-validator==2.0.0
-Flask-Bootstrap4==4.0.2 
+Flask-Bootstrap4==4.0.2
+paho-mqtt==1.6.1
+mysql-connector-python==8.0.26
+Flask-Sock==0.6.0
+simple-websocket==0.10.1 
