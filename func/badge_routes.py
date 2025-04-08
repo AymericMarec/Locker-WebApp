@@ -3,6 +3,7 @@ from app import app
 from models.badge import Badge
 from extensions import db
 from func.mqtt_service import * 
+from func.mqtt_service import get_last_scan as mqtt_get_last_scan
 
 mqtt_client = init_mqtt_client()
 
@@ -10,6 +11,7 @@ mqtt_client = init_mqtt_client()
 def list_badges():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    
     badges = Badge.query.all()
     return render_template('badges.html', badges=badges)
 
@@ -68,6 +70,8 @@ def delete_badge(badge_id):
 def get_last_scan():
     if not session.get('logged_in'):
         return jsonify({"error": "Non authentifié"}), 401
+    
+    last_scan = mqtt_get_last_scan()
     return jsonify({"uid": last_scan})
 
 @app.route('/publish', methods=['POST'])

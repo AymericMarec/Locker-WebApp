@@ -2,33 +2,107 @@
 <html>
 <head>
     <title>Scanner un badge</title>
+    <style>
+        .scan-section {
+            margin: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .scan-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .scan-button:hover {
+            background-color: #45a049;
+        }
+        .cancel-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        .cancel-button:hover {
+            background-color: #da190b;
+        }
+        .scan-status {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #666;
+        }
+        .badge-item {
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-button {
+            padding: 5px 10px;
+            background-color: #f44336;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .delete-button:hover {
+            background-color: #da190b;
+        }
+    </style>
 </head>
 <body>
-    <div id="scanSection" style="display: none;">
-        <p>Scannez votre badge...</p>
-        <button onclick="cancelScan()">Annuler</button>
+    <div class="scan-section" id="scanSection" style="display: none;">
+        <p class="scan-status">Scannez votre badge...</p>
+        <button class="cancel-button" onclick="cancelScan()">Annuler</button>
     </div>
 
-    <div id="addSection">
-        <button onclick="startScan()">Scanner un badge</button>
+    <div class="scan-section" id="addSection">
+        <button class="scan-button" onclick="startScan()">Scanner un badge</button>
+    </div>
+
+    <div id="badgesList">
+        <h2>Liste des badges</h2>
+        <div id="badgesContainer">
+            {% for badge in badges %}
+            <div class="badge-item">
+                <div>
+                    <span>UID: {{ badge.uid }}</span>
+                    <span> - {{ badge.description }}</span>
+                </div>
+                <button class="delete-button" onclick="deleteBadge({{ badge.id }})">Supprimer</button>
+            </div>
+            {% endfor %}
+        </div>
     </div>
 
     <script>
         let scanTimeout;
         let checkInterval;
         let lastScannedBadge = null;
+        let scanAttempts = 0;
+        const MAX_SCAN_ATTEMPTS = 30;
 
         function startScan() {
             document.getElementById('scanSection').style.display = 'block';
             document.getElementById('addSection').style.display = 'none';
+            scanAttempts = 0;
             
-            // On attend 30 secondes maximum pour le scan
             scanTimeout = setTimeout(() => {
                 cancelScan();
-                alert('Délai dépassé. Veuillez réessayer.');
+                alert('Temps de scan écoulé. Veuillez réessayer.');
             }, 30000);
 
-            // On vérifie périodiquement si un badge a été scanné
             checkInterval = setInterval(checkLastScan, 1000);
         }
 
@@ -37,10 +111,18 @@
             clearInterval(checkInterval);
             document.getElementById('scanSection').style.display = 'none';
             document.getElementById('addSection').style.display = 'block';
+            scanAttempts = 0;
         }
 
         async function checkLastScan() {
             try {
+                scanAttempts++;
+                if (scanAttempts > MAX_SCAN_ATTEMPTS) {
+                    cancelScan();
+                    alert('Aucun badge détecté. Veuillez réessayer.');
+                    return;
+                }
+
                 const response = await fetch('/last_scan');
                 const data = await response.json();
                 
@@ -48,20 +130,14 @@
                     lastScannedBadge = data.uid;
                     clearInterval(checkInterval);
                     clearTimeout(scanTimeout);
-                    
-                    const description = prompt("Badge scanné ! Entrez une description :", "");
-                    if (description !== null) {
-                        addBadge(data.uid, description);
-                    } else {
-                        cancelScan();
-                    }
+                    addBadge(data.uid);
                 }
             } catch (error) {
                 console.error('Erreur:', error);
             }
         }
 
-        async function addBadge(uid, description) {
+        async function addBadge(uid) {
             try {
                 const response = await fetch('/badges/add', {
                     method: 'POST',
@@ -70,20 +146,40 @@
                     },
                     body: JSON.stringify({
                         uid: uid,
-                        description: description,
+                        description: "Badge scanné",
                         is_authorized: true
                     }),
                 });
-
                 if (response.ok) {
-                    alert('Badge ajouté avec succès !');
+                    window.location.reload();
                 } else {
                     alert('Erreur lors de l\'ajout du badge');
                 }
             } catch (error) {
+                console.error('Erreur:', error);
                 alert('Erreur lors de l\'ajout du badge');
             } finally {
                 cancelScan();
+            }
+        }
+
+        async function deleteBadge(badgeId) {
+            if (!confirm('Êtes-vous sûr de vouloir supprimer ce badge ?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/badges/${badgeId}/delete`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erreur lors de la suppression du badge');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la suppression du badge');
             }
         }
     </script>
