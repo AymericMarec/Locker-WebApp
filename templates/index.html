@@ -37,15 +37,18 @@
     
     <script>
         function sendFixedMessage() {
+            const message = "true";
             const topic = "response";
-            const message = "test";
                         
             fetch('/publish', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ topic: topic, message: message }),
+                body: JSON.stringify({ 
+                    message: message,
+                    topic: topic 
+                }),
             });
         }
     </script>
