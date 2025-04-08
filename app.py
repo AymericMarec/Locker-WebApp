@@ -215,6 +215,12 @@ def get_last_scan():
         return jsonify({"error": "Non authentifié"}), 401
     return jsonify({"uid": last_scan})
 
+@app.route('/dashboard')
+def dashboard():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return render_template('dashboard.html')
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
