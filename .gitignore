@@ -1,2 +1,4 @@
 mosquitto/
 mysql-data/
+__pycache__/
+*.pyc
