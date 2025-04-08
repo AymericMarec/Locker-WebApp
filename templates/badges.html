@@ -55,9 +55,29 @@
             border: none;
             border-radius: 3px;
             cursor: pointer;
+            margin-left: 10px;
         }
         .delete-button:hover {
             background-color: #da190b;
+        }
+        .toggle-button {
+            padding: 5px 10px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .toggle-button:hover {
+            background-color: #0b7dda;
+        }
+        .authorized {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .unauthorized {
+            color: #f44336;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -79,8 +99,16 @@
                 <div>
                     <span>UID: {{ badge.uid }}</span>
                     <span> - {{ badge.description }}</span>
+                    <span class="{% if badge.is_authorized %}authorized{% else %}unauthorized{% endif %}">
+                        ({{ "Autorisé" if badge.is_authorized else "Non autorisé" }})
+                    </span>
                 </div>
-                <button class="delete-button" onclick="deleteBadge({{ badge.id }})">Supprimer</button>
+                <div>
+                    <button class="toggle-button" onclick="toggleBadge({{ badge.id }})">
+                        {{ "Désautoriser" if badge.is_authorized else "Autoriser" }}
+                    </button>
+                    <button class="delete-button" onclick="deleteBadge({{ badge.id }})">Supprimer</button>
+                </div>
             </div>
             {% endfor %}
         </div>
@@ -160,6 +188,22 @@
                 alert('Erreur lors de l\'ajout du badge');
             } finally {
                 cancelScan();
+            }
+        }
+
+        async function toggleBadge(badgeId) {
+            try {
+                const response = await fetch(`/badges/${badgeId}/toggle`, {
+                    method: 'POST'
+                });
+                if (response.ok) {
+                    window.location.reload();
+                } else {
+                    alert('Erreur lors de la modification de l\'autorisation');
+                }
+            } catch (error) {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la modification de l\'autorisation');
             }
         }
 
