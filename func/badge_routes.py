@@ -33,7 +33,7 @@ def add_badge():
         # Ajout normal d'un badge
         uid = data.get('uid')
         description = data.get('description')
-        is_authorized = data.get('is_authorized', True)
+        is_authorized = data.get('is_authorized', False)
         
         if not uid:
             return jsonify({"success": False, "error": "UID requis"}), 400
@@ -107,7 +107,18 @@ def close_door():
         return jsonify({"error": "Non authentifié"}), 401
     
     try:
-        mqtt_client.publish(MQTT_TOPIC_RESPONSE, "close", qos=1)
+        mqtt_client.publish(MQTT_TOPIC_RESPONSE, MQTT_MSG_CLOSE, qos=1)
         return jsonify({"success": True, "message": "Commande de fermeture envoyée"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/door/open', methods=['POST'])
+def open_door():
+    if not session.get('logged_in'):
+        return jsonify({"error": "Non authentifié"}), 401
+    
+    try:
+        mqtt_client.publish(MQTT_TOPIC_RESPONSE, MQTT_MSG_ALLOWED, qos=1)
+        return jsonify({"success": True, "message": "Commande d'ouverture envoyée"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500 

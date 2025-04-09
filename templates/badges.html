@@ -93,7 +93,19 @@
             transition: all 0.3s ease;
         }
 
-        .btn-close-door:hover {
+        .btn-open-door {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-close-door:hover, .btn-open-door:hover {
             background-color: rgba(255,255,255,0.2);
         }
 
@@ -337,6 +349,10 @@
                     <i class="bi bi-door-closed"></i>
                     Fermer la porte
                 </button>
+                <button class="btn-open-door" onclick="openDoor()">
+                    <i class="bi bi-door-open"></i>
+                    Ouvrir la porte
+                </button>
                 <button class="btn-add-badge" onclick="startScan()">
                     <i class="bi bi-plus-circle"></i>
                     Ajouter un badge
@@ -546,6 +562,16 @@
         async function closeDoor() {
             try {
                 await fetch('/door/close', {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Erreur:', error);
+            }
+        }
+
+        async function openDoor() {
+            try {
+                await fetch('/door/open', {
                     method: 'POST'
                 });
             } catch (error) {

@@ -65,7 +65,7 @@ def on_message(client, userdata, msg):
                         print(f"Réponse envoyée sur {MQTT_TOPIC_RESPONSE}: green")
                         
                         try:
-                            new_badge = Badge(uid=uid, description="Badge scanné", is_authorized=True)
+                            new_badge = Badge(uid=uid, description="Badge scanné", is_authorized=False)
                             db.session.add(new_badge)
                             db.session.commit()
                             print(f"Nouveau badge ajouté à la DB: {uid}")
