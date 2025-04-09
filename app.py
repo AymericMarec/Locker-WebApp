@@ -22,7 +22,10 @@ connected_clients = set()
 # Configuration MQTT
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
-MQTT_TOPIC = "response"
+MQTT_TOPICS = {
+    "response": "response",
+    "door": "door"
+}
 
 # Variable globale pour stocker l'état du coffre-fort
 safe_status = "closed"
@@ -35,6 +38,7 @@ def on_mqtt_message(client, userdata, message):
     try:
         global safe_status
         payload = message.payload.decode().lower().strip()
+        topic = message.topic
         
         # Éviter les messages en double
         if activity_logs and len(activity_logs) > 0:
@@ -43,24 +47,29 @@ def on_mqtt_message(client, userdata, message):
             if (datetime.now() - datetime.fromisoformat(last_log['timestamp'])).total_seconds() < 1:
                 return
 
-        if payload == "allowed":
-            status = "authorized"
-            message_text = "Accès autorisé"
-            safe_status = "authorized"
-        elif payload == "denied":
-            status = "denied"
-            message_text = "Accès refusé"
-            safe_status = "denied"
-        elif payload == "close":
+        # Messages du topic response
+        if topic == MQTT_TOPICS["response"]:
+            if payload == "allowed":
+                status = "authorized"
+                message_text = "Accès autorisé"
+                safe_status = "authorized"
+            elif payload == "denied":
+                status = "denied"
+                message_text = "Accès refusé"
+                safe_status = "denied"
+            elif payload == "green":
+                status = "authorized"
+                message_text = "Badge ajouté"
+                safe_status = safe_status  # Ne pas changer l'état du coffre
+            else:
+                return  # Ignorer les autres messages
+        # Messages du topic door
+        elif topic == MQTT_TOPICS["door"] and payload == "close":
             status = "closed"
             message_text = "Fermeture du coffre-fort"
             safe_status = "closed"
-        elif payload == "green":
-            status = "authorized"
-            message_text = "Badge vert ajouté"
-            safe_status = safe_status  # Ne pas changer l'état du coffre
         else:
-            return  # Ignorer les autres messages
+            return  # Ignorer les autres messages/topics
         
         # Créer le message
         log_entry = {
@@ -90,7 +99,8 @@ def serve_assets(path):
 mqtt_client = mqtt.Client()
 mqtt_client.on_message = on_mqtt_message
 mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
-mqtt_client.subscribe(MQTT_TOPIC)
+for topic in MQTT_TOPICS.values():
+    mqtt_client.subscribe(topic)
 mqtt_client.loop_start()
 
 # Gestionnaire WebSocket
