@@ -8,6 +8,7 @@ from extensions import db
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPIC_SCAN = "scan"
+MQTT_TOPIC_DOOR = "door"
 MQTT_TOPIC_RESPONSE = "response"
 MQTT_MSG_CLOSE = "close"
 MQTT_MSG_ALLOWED = "allowed"
@@ -17,14 +18,16 @@ last_scan = None
 last_scan_time = 0
 last_processed_payload = None
 last_processed_time = 0
+last_mac_address = None  # Nouvelle variable pour stocker la dernière adresse MAC
 is_adding_badge = False  # Variable pour suivre si on est en mode ajout de badge
 
 def on_connect(client, userdata, flags, rc):
     print("Connecté au broker MQTT")
     client.subscribe(MQTT_TOPIC_SCAN)
+    client.subscribe(MQTT_TOPIC_DOOR)
 
 def on_message(client, userdata, msg):
-    global last_scan, last_scan_time, last_processed_payload, last_processed_time
+    global last_scan, last_scan_time, last_processed_payload, last_processed_time, last_mac_address
     
     try:
         payload = msg.payload.decode()
@@ -41,13 +44,13 @@ def on_message(client, userdata, msg):
         last_processed_payload = payload
         last_processed_time = current_time
         
-        if msg.topic == MQTT_TOPIC_SCAN:
-            # Si c'est une commande de fermeture
+        if msg.topic == MQTT_TOPIC_DOOR:
+            # Gérer la commande de fermeture de porte
             if payload == MQTT_MSG_CLOSE:
-                client.publish(MQTT_TOPIC_RESPONSE, MQTT_MSG_CLOSE, qos=1)
-                print(f"Commande de fermeture envoyée sur {MQTT_TOPIC_RESPONSE}")
+                print("Commande de fermeture de porte reçue")
                 return
 
+        if msg.topic == MQTT_TOPIC_SCAN:
             # Pour un scan de badge
             # Extraire l'adresse MAC et l'UID
             mac_address = payload.split('|')[0]
@@ -56,6 +59,7 @@ def on_message(client, userdata, msg):
             
             last_scan = uid
             last_scan_time = time.time()
+            last_mac_address = mac_address  # Stocker la dernière adresse MAC
             print(f"Badge scanné: {payload}")
             
             with app.app_context():
@@ -122,3 +126,7 @@ def set_adding_badge_mode(enabled):
     global is_adding_badge
     is_adding_badge = enabled
     print(f"Mode ajout de badge: {'activé' if enabled else 'désactivé'}") 
+
+def get_last_mac_address():
+    """Retourne la dernière adresse MAC reçue"""
+    return last_mac_address 

@@ -3,7 +3,7 @@ from app import app
 from models.badge import Badge
 from extensions import db
 from func.mqtt_service import * 
-from func.mqtt_service import get_last_scan as mqtt_get_last_scan
+from func.mqtt_service import get_last_scan as mqtt_get_last_scan, get_last_mac_address
 
 mqtt_client = init_mqtt_client()
 
@@ -107,7 +107,12 @@ def close_door():
         return jsonify({"error": "Non authentifié"}), 401
     
     try:
-        mqtt_client.publish(MQTT_TOPIC_RESPONSE, MQTT_MSG_CLOSE, qos=1)
+        mac_address = get_last_mac_address()
+        if not mac_address:
+            return jsonify({"error": "Aucune adresse MAC disponible"}), 400
+            
+        response_topic = f"{MQTT_TOPIC_RESPONSE}/{mac_address}"
+        mqtt_client.publish(response_topic, MQTT_MSG_CLOSE, qos=1)
         return jsonify({"success": True, "message": "Commande de fermeture envoyée"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -118,7 +123,12 @@ def open_door():
         return jsonify({"error": "Non authentifié"}), 401
     
     try:
-        mqtt_client.publish(MQTT_TOPIC_RESPONSE, MQTT_MSG_ALLOWED, qos=1)
+        mac_address = get_last_mac_address()
+        if not mac_address:
+            return jsonify({"error": "Aucune adresse MAC disponible"}), 400
+            
+        response_topic = f"{MQTT_TOPIC_RESPONSE}/{mac_address}"
+        mqtt_client.publish(response_topic, MQTT_MSG_ALLOWED, qos=1)
         return jsonify({"success": True, "message": "Commande d'ouverture envoyée"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500 
