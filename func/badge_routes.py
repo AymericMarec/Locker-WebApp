@@ -33,7 +33,7 @@ def add_badge():
         # Ajout normal d'un badge
         uid = data.get('uid')
         description = data.get('description')
-        is_authorized = data.get('is_authorized', False)
+        is_authorized = data.get('is_authorized', True)
         
         if not uid:
             return jsonify({"success": False, "error": "UID requis"}), 400
