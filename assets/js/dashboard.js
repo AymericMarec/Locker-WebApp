@@ -6,6 +6,13 @@ const safeStatusBadge = document.getElementById('safeStatusBadge');
 const lastActivity = document.getElementById('lastActivity');
 const logContainer = document.querySelector('.log-container');
 
+// Éléments du modal
+const badgeNameModal = new bootstrap.Modal(document.getElementById('badgeNameModal'));
+const badgeNameForm = document.getElementById('badgeNameForm');
+const badgeUidInput = document.getElementById('badgeUid');
+const badgeNameInput = document.getElementById('badgeName');
+const saveBadgeNameBtn = document.getElementById('saveBadgeName');
+
 // Configuration WebSocket
 let ws;
 
@@ -84,6 +91,39 @@ function addLogEntry(message, status, timestamp, isNewEntry = true) {
     }
 }
 
+// Sauvegarder le nom du badge
+async function saveBadgeName(uid, name) {
+    try {
+        const response = await fetch('/api/badges', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ uid, name })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Erreur lors de l\'enregistrement du badge');
+        }
+        
+        badgeNameModal.hide();
+        badgeNameForm.reset();
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de l\'enregistrement du badge');
+    }
+}
+
+// Event listener pour le bouton de sauvegarde
+saveBadgeNameBtn.addEventListener('click', () => {
+    const uid = badgeUidInput.value;
+    const name = badgeNameInput.value;
+    
+    if (name.trim()) {
+        saveBadgeName(uid, name);
+    }
+});
+
 function connectWebSocket() {
     ws = new WebSocket(`ws://${window.location.host}/ws`);
 
@@ -92,6 +132,12 @@ function connectWebSocket() {
         if (data.type === 'access_log') {
             updateSafeStatus(data.status);
             addLogEntry(data.message, data.status, data.timestamp);
+            
+            // Si c'est un nouveau badge, afficher le modal
+            if (data.message === "Badge ajouté" && data.badge_uid) {
+                badgeUidInput.value = data.badge_uid;
+                badgeNameModal.show();
+            }
         }
     };
 

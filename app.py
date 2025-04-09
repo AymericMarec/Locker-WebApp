@@ -1,4 +1,4 @@
-from flask import Flask, send_from_directory, render_template, jsonify
+from flask import Flask, send_from_directory, render_template, jsonify, request
 import os
 from flask_sock import Sock
 from extensions import db
@@ -53,14 +53,18 @@ def on_mqtt_message(client, userdata, message):
                 status = "authorized"
                 message_text = "Accès autorisé"
                 safe_status = "authorized"
+                badge_uid = None
             elif payload == "denied":
                 status = "denied"
                 message_text = "Accès refusé"
                 safe_status = "denied"
-            elif payload == "green":
+                badge_uid = None
+            elif payload.startswith("green"):
                 status = "authorized"
                 message_text = "Badge ajouté"
                 safe_status = safe_status  # Ne pas changer l'état du coffre
+                # Extraire l'UID du badge du message
+                badge_uid = payload.split(" ")[1] if len(payload.split(" ")) > 1 else None
             else:
                 return  # Ignorer les autres messages
         # Messages du topic door
@@ -68,6 +72,7 @@ def on_mqtt_message(client, userdata, message):
             status = "closed"
             message_text = "Fermeture du coffre-fort"
             safe_status = "closed"
+            badge_uid = None
         else:
             return  # Ignorer les autres messages/topics
         
@@ -78,6 +83,10 @@ def on_mqtt_message(client, userdata, message):
             "status": status,
             "timestamp": datetime.now().isoformat()
         }
+        
+        # Ajouter l'UID du badge si présent
+        if badge_uid:
+            log_entry["badge_uid"] = badge_uid
         
         # Sauvegarder le log
         activity_logs.appendleft(log_entry)
@@ -123,6 +132,26 @@ def get_safe_status():
         "status": safe_status,
         "logs": list(activity_logs)  # Convertir deque en liste pour la sérialisation JSON
     })
+
+# Route pour enregistrer un badge
+@app.route('/api/badges', methods=['POST'])
+def save_badge():
+    try:
+        data = request.json
+        uid = data.get('uid')
+        name = data.get('name')
+        
+        if not uid or not name:
+            return jsonify({'error': 'UID et nom requis'}), 400
+        
+        badge = Badge(uid=uid, name=name)
+        db.session.add(badge)
+        db.session.commit()
+        
+        return jsonify(badge.to_dict()), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
 # Importer les routes après avoir configuré l'application
 from func.auth_routes import *

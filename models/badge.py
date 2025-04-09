@@ -1,12 +1,21 @@
 from extensions import db
-import datetime
+from datetime import datetime
 
 class Badge(db.Model):
+    __tablename__ = 'badges'
+    
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String(50), unique=True, nullable=False)
-    is_authorized = db.Column(db.Boolean, default=False)
-    description = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    name = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'uid': self.uid,
+            'name': self.name,
+            'created_at': self.created_at.isoformat()
+        }
 
     def __repr__(self):
-        return f'<Badge {self.uid} - Authorized: {self.is_authorized}>' 
+        return f'<Badge {self.uid} - Name: {self.name}>' 
