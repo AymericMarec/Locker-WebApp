@@ -47,21 +47,22 @@ def on_mqtt_message(client, userdata, message):
             if (datetime.now() - datetime.fromisoformat(last_log['timestamp'])).total_seconds() < 1:
                 return
 
-        # Messages du topic response
-        if topic == MQTT_TOPICS["response"]:
+        # Messages du topic response/{mac_address}
+        if topic.startswith(MQTT_TOPICS["response"] + "/"):
+            mac_address = topic.split('/')[-1]
             if payload == "allowed":
                 status = "authorized"
-                message_text = "Accès autorisé"
+                message_text = f"Accès autorisé (MAC: {mac_address})"
                 safe_status = "authorized"
                 badge_uid = None
             elif payload == "denied":
                 status = "denied"
-                message_text = "Accès refusé"
+                message_text = f"Accès refusé (MAC: {mac_address})"
                 safe_status = "denied"
                 badge_uid = None
             elif payload.startswith("green"):
                 status = "authorized"
-                message_text = "Badge ajouté"
+                message_text = f"Badge ajouté (MAC: {mac_address})"
                 safe_status = safe_status  # Ne pas changer l'état du coffre
                 # Extraire l'UID du badge du message
                 badge_uid = payload.split(" ")[1] if len(payload.split(" ")) > 1 else None

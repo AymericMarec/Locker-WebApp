@@ -49,10 +49,14 @@ def on_message(client, userdata, msg):
                 return
 
             # Pour un scan de badge
-            uid = payload
+            # Extraire l'adresse MAC et l'UID
+            mac_address = payload.split('|')[0]
+            uid = payload.split('|')[1]
+            response_topic = f"{MQTT_TOPIC_RESPONSE}/{mac_address}"
+            
             last_scan = uid
             last_scan_time = time.time()
-            print(f"Badge scanné: {uid}")
+            print(f"Badge scanné: {payload}")
             
             with app.app_context():
                 # Vérifier si le badge existe déjà
@@ -61,29 +65,30 @@ def on_message(client, userdata, msg):
                 if not badge:
                     if is_adding_badge:
                         # Si on est en mode ajout de badge, on l'ajoute à la base de données
-                        client.publish(MQTT_TOPIC_RESPONSE, "green", qos=1)
-                        print(f"Réponse envoyée sur {MQTT_TOPIC_RESPONSE}: green")
-                        
                         try:
-                            new_badge = Badge(uid=uid, description="Badge scanné", is_authorized=True)
+                            new_badge = Badge(uid=uid, name="Badge scanné", is_authorized=True)
                             db.session.add(new_badge)
                             db.session.commit()
                             print(f"Nouveau badge ajouté à la DB: {uid}")
-                            response = MQTT_MSG_DENIED
+                            response = MQTT_MSG_ALLOWED  # Envoyer allowed après l'ajout réussi
+                            client.publish(response_topic, response, qos=1)
+                            print(f"Réponse envoyée sur {response_topic}: {response}")
                         except Exception as e:
                             print(f"Erreur lors de l'ajout du badge: {e}")
                             db.session.rollback()
                             response = MQTT_MSG_DENIED
+                            client.publish(response_topic, response, qos=1)
+                            print(f"Réponse envoyée sur {response_topic}: {response}")
                     else:
                         # Si on n'est pas en mode ajout, on refuse simplement l'accès
                         response = MQTT_MSG_DENIED
-                        client.publish(MQTT_TOPIC_RESPONSE, response, qos=1)
+                        client.publish(response_topic, response, qos=1)
                         print(f"Badge inconnu, accès refusé: {uid}")
                 else:
                     # Si le badge existe, vérifier son autorisation
                     response = MQTT_MSG_ALLOWED if badge.is_authorized else MQTT_MSG_DENIED
-                    client.publish(MQTT_TOPIC_RESPONSE, response, qos=1)
-                    print(f"Réponse envoyée sur {MQTT_TOPIC_RESPONSE}: {response}")
+                    client.publish(response_topic, response, qos=1)
+                    print(f"Réponse envoyée sur {response_topic}: {response}")
             
     except Exception as e:
         print(f"Erreur lors du traitement du message: {e}")

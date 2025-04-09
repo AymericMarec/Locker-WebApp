@@ -7,6 +7,7 @@ class Badge(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.String(50), unique=True, nullable=False)
     name = db.Column(db.String(100), nullable=False)
+    is_authorized = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     def to_dict(self):
@@ -14,6 +15,7 @@ class Badge(db.Model):
             'id': self.id,
             'uid': self.uid,
             'name': self.name,
+            'is_authorized': self.is_authorized,
             'created_at': self.created_at.isoformat()
         }
 
