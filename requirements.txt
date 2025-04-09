@@ -11,4 +11,5 @@ Flask-Bootstrap4==4.0.2
 paho-mqtt==1.6.1
 mysql-connector-python==8.0.26
 Flask-Sock==0.6.0
-simple-websocket==0.10.1 
+simple-websocket==0.10.1
+websockets==11.0.3 
