@@ -125,27 +125,39 @@ saveBadgeNameBtn.addEventListener('click', () => {
 });
 
 function connectWebSocket() {
+    console.log("Tentative de connexion WebSocket...");  // Debug log
     ws = new WebSocket(`ws://${window.location.host}/ws`);
 
+    ws.onopen = function() {
+        console.log("Connexion WebSocket établie");  // Debug log
+    };
+
     ws.onmessage = function(event) {
-        const data = JSON.parse(event.data);
-        if (data.type === 'access_log') {
-            updateSafeStatus(data.status);
-            addLogEntry(data.message, data.status, data.timestamp);
-            
-            // Si c'est un nouveau badge, afficher le modal
-            if (data.message === "Badge ajouté" && data.badge_uid) {
-                badgeUidInput.value = data.badge_uid;
-                badgeNameModal.show();
+        console.log("Message WebSocket reçu:", event.data);  // Debug log
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'access_log') {
+                console.log("Log d'accès reçu:", data);  // Debug log
+                updateSafeStatus(data.status);
+                addLogEntry(data.message, data.status, data.timestamp);
+                
+                // Si c'est un nouveau badge, afficher le modal
+                if (data.message === "Badge ajouté" && data.badge_uid) {
+                    badgeUidInput.value = data.badge_uid;
+                    badgeNameModal.show();
+                }
             }
+        } catch (error) {
+            console.error("Erreur lors du traitement du message WebSocket:", error);  // Debug log
         }
     };
 
     ws.onerror = function(error) {
-        console.error('Erreur WebSocket:', error);
+        console.error("Erreur WebSocket:", error);
     };
 
     ws.onclose = function() {
+        console.log("Connexion WebSocket fermée, tentative de reconnexion dans 5s...");  // Debug log
         setTimeout(connectWebSocket, 5000);
     };
 }

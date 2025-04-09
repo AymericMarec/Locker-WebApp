@@ -23,7 +23,7 @@ connected_clients = set()
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPICS = {
-    "response": "response",
+    "response": "response/#",  # Utilisation du wildcard MQTT pour capturer tous les sous-topics
     "door": "door"
 }
 
@@ -40,29 +40,29 @@ def on_mqtt_message(client, userdata, message):
         payload = message.payload.decode().lower().strip()
         topic = message.topic
         
-        # Éviter les messages en double
-        if activity_logs and len(activity_logs) > 0:
-            last_log = activity_logs[0]
-            # Si le dernier message date de moins d'une seconde, on l'ignore
-            if (datetime.now() - datetime.fromisoformat(last_log['timestamp'])).total_seconds() < 1:
-                return
-
+        print(f"Message MQTT reçu - Topic: {topic}, Payload: {payload}")  # Debug log
+        
         # Messages du topic response/{mac_address}
-        if topic.startswith(MQTT_TOPICS["response"] + "/"):
+        if topic.startswith(MQTT_TOPICS["response"].replace("/#", "/")):
             mac_address = topic.split('/')[-1]
             if payload == "allowed":
                 status = "authorized"
-                message_text = f"Accès autorisé (MAC: {mac_address})"
+                message_text = "Accès autorisé"
                 safe_status = "authorized"
                 badge_uid = None
             elif payload == "denied":
                 status = "denied"
-                message_text = f"Accès refusé (MAC: {mac_address})"
+                message_text = "Accès refusé"
                 safe_status = "denied"
+                badge_uid = None
+            elif payload == "close":
+                status = "closed"
+                message_text = "Porte fermée"
+                safe_status = "closed"
                 badge_uid = None
             elif payload.startswith("green"):
                 status = "authorized"
-                message_text = f"Badge ajouté (MAC: {mac_address})"
+                message_text = "Badge ajouté"
                 safe_status = safe_status  # Ne pas changer l'état du coffre
                 # Extraire l'UID du badge du message
                 badge_uid = payload.split(" ")[1] if len(payload.split(" ")) > 1 else None
@@ -71,10 +71,12 @@ def on_mqtt_message(client, userdata, message):
         # Messages du topic door
         elif topic == MQTT_TOPICS["door"] and payload == "close":
             status = "closed"
-            message_text = "Fermeture du coffre-fort"
+            message_text = "Porte fermée"
             safe_status = "closed"
             badge_uid = None
+            print("Fermeture du coffre détectée")  # Debug log
         else:
+            print(f"Topic ignoré: {topic}")  # Debug log
             return  # Ignorer les autres messages/topics
         
         # Créer le message
@@ -89,14 +91,20 @@ def on_mqtt_message(client, userdata, message):
         if badge_uid:
             log_entry["badge_uid"] = badge_uid
         
+        print(f"Log entry créé: {log_entry}")  # Debug log
+        
         # Sauvegarder le log
         activity_logs.appendleft(log_entry)
         
         # Envoyer le message à tous les clients WebSocket connectés
+        print(f"Nombre de clients WebSocket connectés: {len(connected_clients)}")  # Debug log
         for client in connected_clients.copy():
             try:
-                client.send(json.dumps(log_entry))
-            except:
+                message_json = json.dumps(log_entry)
+                print(f"Envoi du message au client WebSocket: {message_json}")  # Debug log
+                client.send(message_json)
+            except Exception as e:
+                print(f"Erreur lors de l'envoi au client WebSocket: {str(e)}")  # Debug log
                 connected_clients.remove(client)
     except Exception as e:
         print(f"Erreur lors du traitement du message MQTT: {str(e)}")
@@ -116,17 +124,20 @@ mqtt_client.loop_start()
 # Gestionnaire WebSocket
 @sock.route('/ws')
 def handle_websocket(ws):
+    print(f"Nouvelle connexion WebSocket établie")  # Debug log
     connected_clients.add(ws)
+    print(f"Nombre total de clients connectés: {len(connected_clients)}")  # Debug log
     try:
         while True:
             message = ws.receive()
-            # Gérer les messages entrants du client si nécessaire
-    except:
-        pass
+            print(f"Message WebSocket reçu: {message}")  # Debug log
+    except Exception as e:
+        print(f"Erreur WebSocket: {str(e)}")  # Debug log
     finally:
         connected_clients.remove(ws)
+        print(f"Client WebSocket déconnecté. Restants: {len(connected_clients)}")  # Debug log
 
-# Route pour obtenir l'état actuel du coffre-fort
+# Route pour obtenir l'état actuel du coffre-fort et les logs
 @app.route('/api/safe-status')
 def get_safe_status():
     return jsonify({
