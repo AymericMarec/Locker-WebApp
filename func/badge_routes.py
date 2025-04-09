@@ -22,6 +22,15 @@ def add_badge():
     
     try:
         data = request.json
+        if 'start_scan' in data:
+            # Activer/désactiver le mode scan
+            set_adding_badge_mode(data['start_scan'])
+            return jsonify({
+                "success": True, 
+                "message": "Mode scan " + ("activé" if data['start_scan'] else "désactivé")
+            })
+        
+        # Ajout normal d'un badge
         uid = data.get('uid')
         description = data.get('description')
         is_authorized = data.get('is_authorized', False)
@@ -89,5 +98,16 @@ def publish_message():
             
         mqtt_client.publish(topic, message)
         return jsonify({"success": True, "message": "Message publié avec succès"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/door/close', methods=['POST'])
+def close_door():
+    if not session.get('logged_in'):
+        return jsonify({"error": "Non authentifié"}), 401
+    
+    try:
+        mqtt_client.publish(MQTT_TOPIC_RESPONSE, "close", qos=1)
+        return jsonify({"success": True, "message": "Commande de fermeture envoyée"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500 

@@ -22,12 +22,6 @@ from func.badge_routes import *
 from func.mqtt_service import init_mqtt_client
 mqtt_client = init_mqtt_client()
 
-@app.route('/dashboard')
-def dashboard():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-    return render_template('dashboard.html')
-
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()

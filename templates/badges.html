@@ -1,156 +1,462 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <title>Scanner un badge</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Badges - Système de Coffre-Fort</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
-        .scan-section {
-            margin: 20px;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            text-align: center;
+        :root {
+            --primary-color: #3f51b5;
+            --primary-dark: #303f9f;
+            --accent-color: #4CAF50;
+            --accent-dark: #388E3C;
+            --danger-color: #ef5350;
+            --danger-dark: #d32f2f;
+            --background-light: #f5f7ff;
         }
-        .scan-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #4CAF50;
+
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        .navbar {
+            background: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand i {
+            font-size: 1.4em;
+            vertical-align: middle;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
             color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        .scan-button:hover {
-            background-color: #45a049;
-        }
-        .cancel-button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #f44336;
-            color: white;
-            border: none;
-            border-radius: 5px;
-        }
-        .cancel-button:hover {
-            background-color: #da190b;
-        }
-        .scan-status {
-            margin: 10px 0;
-            font-size: 18px;
-            color: #666;
-        }
-        .badge-item {
-            margin: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .delete-button {
-            padding: 5px 10px;
-            background-color: #f44336;
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-add-badge {
+            background-color: var(--accent-color);
             color: white;
             border: none;
-            border-radius: 3px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add-badge:hover {
+            background-color: var(--accent-dark);
+            transform: translateY(-1px);
+        }
+
+        .btn-close-door {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-close-door:hover {
+            background-color: rgba(255,255,255,0.2);
+        }
+
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        .badge-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .badge-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .badge-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .badge-icon {
+            background: var(--background-light);
+            color: var(--primary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .badge-uid {
+            font-family: 'Roboto Mono', monospace;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .badge-description {
+            color: #666;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+        }
+
+        .badge-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .access-toggle {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .access-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .access-slider {
+            position: absolute;
             cursor: pointer;
-            margin-left: 10px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 26px;
         }
-        .delete-button:hover {
-            background-color: #da190b;
+
+        .access-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
         }
-        .toggle-button {
-            padding: 5px 10px;
-            background-color: #2196F3;
+
+        input:checked + .access-slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked + .access-slider:before {
+            transform: translateX(24px);
+        }
+
+        .access-status {
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-left: 0.5rem;
+        }
+
+        .access-authorized {
+            color: var(--accent-color);
+        }
+
+        .access-unauthorized {
+            color: var(--danger-color);
+        }
+
+        .btn-delete {
+            color: var(--danger-color);
+            background: none;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            background-color: rgba(239, 83, 80, 0.1);
+        }
+
+        .scanning-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .scanning-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .scanning-icon {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .scanning-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .scanning-subtitle {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-cancel-scan {
+            background-color: var(--danger-color);
             color: white;
             border: none;
-            border-radius: 3px;
-            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
         }
-        .toggle-button:hover {
-            background-color: #0b7dda;
-        }
-        .authorized {
-            color: #4CAF50;
-            font-weight: bold;
-        }
-        .unauthorized {
-            color: #f44336;
-            font-weight: bold;
+
+        .btn-cancel-scan:hover {
+            background-color: var(--danger-dark);
         }
     </style>
 </head>
 <body>
-    <div class="scan-section" id="scanSection" style="display: none;">
-        <p class="scan-status">Scannez votre badge...</p>
-        <button class="cancel-button" onclick="cancelScan()">Annuler</button>
-    </div>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-lock"></i>
+                Système de Coffre-Fort
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">
+                            <i class="bi bi-speedometer2"></i>
+                            Tableau de Bord
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/badges">
+                            <i class="bi bi-credit-card"></i>
+                            Gestion des Badges
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Déconnexion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-    <div class="scan-section" id="addSection">
-        <button class="scan-button" onclick="startScan()">Scanner un badge</button>
-    </div>
+    <div class="main-container">
+        <div class="header-section">
+            <h1 class="header-title">
+                <i class="bi bi-credit-card"></i>
+                Badges Enregistrés
+            </h1>
+            <div class="header-actions">
+                <button class="btn-close-door" onclick="closeDoor()">
+                    <i class="bi bi-door-closed"></i>
+                    Fermer la porte
+                </button>
+                <button class="btn-add-badge" onclick="startScan()">
+                    <i class="bi bi-plus-circle"></i>
+                    Ajouter un badge
+                </button>
+            </div>
+        </div>
 
-    <div id="badgesList">
-        <h2>Liste des badges</h2>
-        <div id="badgesContainer">
+        <div class="badges-grid">
             {% for badge in badges %}
-            <div class="badge-item">
-                <div>
-                    <span>UID: {{ badge.uid }}</span>
-                    <span> - {{ badge.description }}</span>
-                    <span class="{% if badge.is_authorized %}authorized{% else %}unauthorized{% endif %}">
-                        ({{ "Autorisé" if badge.is_authorized else "Non autorisé" }})
-                    </span>
+            <div class="badge-card">
+                <div class="badge-header">
+                    <div class="badge-icon">
+                        <i class="bi bi-key-fill"></i>
+                    </div>
+                    <span class="badge-uid">{{ badge.uid }}</span>
                 </div>
-                <div>
-                    <button class="toggle-button" onclick="toggleBadge({{ badge.id }})">
-                        {{ "Désautoriser" if badge.is_authorized else "Autoriser" }}
+                <div class="badge-description">{{ badge.description }}</div>
+                <div class="badge-actions">
+                    <div class="d-flex align-items-center">
+                        <label class="access-toggle">
+                            <input type="checkbox" 
+                                   {% if badge.is_authorized %}checked{% endif %}
+                                   onchange="toggleAccess('{{ badge.id }}', this.checked, this)">
+                            <span class="access-slider"></span>
+                        </label>
+                        <span class="access-status {% if badge.is_authorized %}access-authorized{% else %}access-unauthorized{% endif %}">
+                            {% if badge.is_authorized %}
+                            Autorisé
+                            {% else %}
+                            Non autorisé
+                            {% endif %}
+                        </span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteBadge('{{ badge.id }}')">
+                        <i class="bi bi-trash"></i>
                     </button>
-                    <button class="delete-button" onclick="deleteBadge({{ badge.id }})">Supprimer</button>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
 
+    <div class="scanning-overlay" id="scanSection" style="display: none;">
+        <div class="scanning-content">
+            <i class="bi bi-upc-scan scanning-icon"></i>
+            <h2 class="scanning-title">Scanner un badge</h2>
+            <p class="scanning-subtitle">Veuillez présenter votre badge au lecteur...</p>
+            <button class="btn-cancel-scan" onclick="cancelScan()">
+                <i class="bi bi-x-circle"></i>
+                Annuler
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let scanTimeout;
         let checkInterval;
         let lastScannedBadge = null;
         let scanAttempts = 0;
-        const MAX_SCAN_ATTEMPTS = 30;
 
         function startScan() {
-            document.getElementById('scanSection').style.display = 'block';
-            document.getElementById('addSection').style.display = 'none';
-            scanAttempts = 0;
-            
-            scanTimeout = setTimeout(() => {
-                cancelScan();
-                alert('Temps de scan écoulé. Veuillez réessayer.');
-            }, 30000);
-
-            checkInterval = setInterval(checkLastScan, 1000);
+            fetch('/badges/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_scan: true
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('scanSection').style.display = 'flex';
+                    startCheckingForNewBadge();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
         }
 
         function cancelScan() {
-            clearTimeout(scanTimeout);
-            clearInterval(checkInterval);
-            document.getElementById('scanSection').style.display = 'none';
-            document.getElementById('addSection').style.display = 'block';
+            fetch('/badges/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start_scan: false
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('scanSection').style.display = 'none';
+                    stopCheckingForNewBadge();
+                }
+            })
+            .catch(error => console.error('Erreur:', error));
+        }
+
+        function startCheckingForNewBadge() {
+            scanAttempts = 0;
+            checkInterval = setInterval(checkForNewBadge, 1000);
+        }
+
+        function stopCheckingForNewBadge() {
+            if (checkInterval) {
+                clearInterval(checkInterval);
+            }
+            if (scanTimeout) {
+                clearTimeout(scanTimeout);
+            }
+            lastScannedBadge = null;
             scanAttempts = 0;
         }
 
-        async function checkLastScan() {
+        async function checkForNewBadge() {
             try {
                 scanAttempts++;
-                if (scanAttempts > MAX_SCAN_ATTEMPTS) {
-                    cancelScan();
-                    alert('Aucun badge détecté. Veuillez réessayer.');
-                    return;
-                }
-
                 const response = await fetch('/last_scan');
                 const data = await response.json();
                 
@@ -158,10 +464,15 @@
                     lastScannedBadge = data.uid;
                     clearInterval(checkInterval);
                     clearTimeout(scanTimeout);
-                    addBadge(data.uid);
+                    
+                    if (data.status === 'denied' && !data.is_registered) {
+                        addBadge(data.uid);
+                    }
+                    cancelScan();
                 }
             } catch (error) {
                 console.error('Erreur:', error);
+                cancelScan();
             }
         }
 
@@ -180,52 +491,68 @@
                 });
                 if (response.ok) {
                     window.location.reload();
-                } else {
-                    alert('Erreur lors de l\'ajout du badge');
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('Erreur lors de l\'ajout du badge');
-            } finally {
-                cancelScan();
             }
         }
 
-        async function toggleBadge(badgeId) {
+        async function toggleAccess(badgeId, isAuthorized, element) {
             try {
                 const response = await fetch(`/badges/${badgeId}/toggle`, {
-                    method: 'POST'
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        is_authorized: isAuthorized
+                    }),
                 });
+                
                 if (response.ok) {
-                    window.location.reload();
+                    const data = await response.json();
+                    const statusElement = element.closest('.badge-actions').querySelector('.access-status');
+                    if (data.is_authorized) {
+                        statusElement.textContent = 'Autorisé';
+                        statusElement.classList.remove('access-unauthorized');
+                        statusElement.classList.add('access-authorized');
+                    } else {
+                        statusElement.textContent = 'Non autorisé';
+                        statusElement.classList.remove('access-authorized');
+                        statusElement.classList.add('access-unauthorized');
+                    }
                 } else {
-                    alert('Erreur lors de la modification de l\'autorisation');
+                    element.checked = !isAuthorized;
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('Erreur lors de la modification de l\'autorisation');
+                element.checked = !isAuthorized;
             }
         }
 
         async function deleteBadge(badgeId) {
-            if (!confirm('Êtes-vous sûr de vouloir supprimer ce badge ?')) {
-                return;
-            }
-            
             try {
                 const response = await fetch(`/badges/${badgeId}/delete`, {
                     method: 'POST'
                 });
                 if (response.ok) {
                     window.location.reload();
-                } else {
-                    alert('Erreur lors de la suppression du badge');
                 }
             } catch (error) {
                 console.error('Erreur:', error);
-                alert('Erreur lors de la suppression du badge');
+            }
+        }
+
+        async function closeDoor() {
+            try {
+                await fetch('/door/close', {
+                    method: 'POST'
+                });
+            } catch (error) {
+                console.error('Erreur:', error);
             }
         }
     </script>
 </body>
 </html>
+
