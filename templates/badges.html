@@ -415,6 +415,8 @@
         let scanAttempts = 0;
 
         function startScan() {
+            document.getElementById('scanSection').style.display = 'flex';
+            
             fetch('/badges/add', {
                 method: 'POST',
                 headers: {
@@ -427,7 +429,6 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    document.getElementById('scanSection').style.display = 'flex';
                     startCheckingForNewBadge();
                 }
             })
@@ -449,6 +450,7 @@
                 if (data.success) {
                     document.getElementById('scanSection').style.display = 'none';
                     stopCheckingForNewBadge();
+                    location.reload();
                 }
             })
             .catch(error => console.error('Erreur:', error));
@@ -482,34 +484,27 @@
                     clearTimeout(scanTimeout);
                     
                     if (data.status === 'denied' && !data.is_registered) {
-                        addBadge(data.uid);
+                        const addResponse = await fetch('/badges/add', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                uid: data.uid,
+                                description: "Badge scanné",
+                                is_authorized: true
+                            }),
+                        });
+
+                        if (addResponse.ok) {
+                            location.reload();
+                        }
                     }
                     cancelScan();
                 }
             } catch (error) {
                 console.error('Erreur:', error);
                 cancelScan();
-            }
-        }
-
-        async function addBadge(uid) {
-            try {
-                const response = await fetch('/badges/add', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        uid: uid,
-                        description: "Badge scanné",
-                        is_authorized: true
-                    }),
-                });
-                if (response.ok) {
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error('Erreur:', error);
             }
         }
 
