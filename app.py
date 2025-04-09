@@ -34,8 +34,15 @@ activity_logs = deque(maxlen=100)
 def on_mqtt_message(client, userdata, message):
     try:
         global safe_status
-        payload = message.payload.decode().lower()
+        payload = message.payload.decode().lower().strip()
         
+        # Éviter les messages en double
+        if activity_logs and len(activity_logs) > 0:
+            last_log = activity_logs[0]
+            # Si le dernier message date de moins d'une seconde, on l'ignore
+            if (datetime.now() - datetime.fromisoformat(last_log['timestamp'])).total_seconds() < 1:
+                return
+
         if payload == "allowed":
             status = "authorized"
             message_text = "Accès autorisé"
@@ -48,6 +55,10 @@ def on_mqtt_message(client, userdata, message):
             status = "closed"
             message_text = "Fermeture du coffre-fort"
             safe_status = "closed"
+        elif payload == "green":
+            status = "authorized"
+            message_text = "Badge vert ajouté"
+            safe_status = safe_status  # Ne pas changer l'état du coffre
         else:
             return  # Ignorer les autres messages
         

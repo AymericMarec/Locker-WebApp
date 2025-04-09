@@ -112,4 +112,3 @@ async function init() {
 
 // Démarrer l'application
 init(); 
-init(); 
