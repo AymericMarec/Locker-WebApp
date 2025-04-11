@@ -4,6 +4,7 @@ import time
 # Configuration MQTT
 MQTT_BROKER = "localhost"  # Adresse du broker MQTT
 MQTT_PORT = 1883  # Port MQTT par défaut
+FIXED_MAC = "00:11:22:33:44:55"  # Adresse MAC fixe
 
 def on_connect(client, userdata, flags, rc):
     print("Connecté au broker MQTT avec le code:", rc)
@@ -17,6 +18,10 @@ def main():
     client.connect(MQTT_BROKER, MQTT_PORT, 60)
     client.loop_start()
     
+    # Envoi du message initial sur le topic 'pair'
+    client.publish("pair", FIXED_MAC)
+    print(f"Message envoyé sur le topic 'pair': {FIXED_MAC}")
+    
     while True:
         print("\nQue souhaitez-vous faire ?")
         print("1. Envoyer un message sur le topic 'scan'")
@@ -26,9 +31,8 @@ def main():
         choice = input("Votre choix (1-3): ")
         
         if choice == "1":
-            mac = input("Entrez l'adresse MAC (format: xx:xx:xx:xx:xx:xx): ")
             uid = input("Entrez l'UID (2 caractères): ")
-            message = f"{mac}|{uid}"
+            message = f"{FIXED_MAC}|{uid}"
             client.publish("scan", message)
             print(f"Message envoyé sur le topic 'scan': {message}")
             

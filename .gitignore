@@ -1,4 +1,6 @@
-mosquitto/
+# Python cache
+**/__pycache__/
+
+# Docker data
 mysql-data/
-__pycache__/
-*.pyc
+mosquitto/

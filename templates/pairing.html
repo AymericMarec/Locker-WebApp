@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appairage - Locker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .mac-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .mac-item {
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 5px;
+            border-radius: 5px;
+        }
+        .mac-item:hover {
+            background-color: #f8f9fa;
+        }
+        .selected {
+            background-color: #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="text-center">Appairage du Locker</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="macList" class="mac-list mb-3">
+                            <p class="text-center">Aucun locker disponible</p>
+                        </div>
+                        <div id="passwordForm" style="display: none;">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Mot de passe</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <button class="btn btn-primary w-100" onclick="pairLocker()">Se connecter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedMac = null;
+        const macList = document.getElementById('macList');
+        const passwordForm = document.getElementById('passwordForm');
+
+        // Connexion WebSocket pour recevoir les adresses MAC
+        const ws = new WebSocket(`ws://${window.location.host}/ws/pairing`);
+        
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'mac_list') {
+                updateMacList(data.macs);
+            }
+        };
+
+        function updateMacList(macs) {
+            if (macs.length === 0) {
+                macList.innerHTML = '<p class="text-center">Aucun locker disponible</p>';
+                return;
+            }
+
+            macList.innerHTML = '';
+            macs.forEach(mac => {
+                const div = document.createElement('div');
+                div.className = 'mac-item';
+                div.textContent = mac;
+                div.onclick = () => selectMac(mac);
+                macList.appendChild(div);
+            });
+        }
+
+        function selectMac(mac) {
+            selectedMac = mac;
+            document.querySelectorAll('.mac-item').forEach(item => {
+                item.classList.remove('selected');
+                if (item.textContent === mac) {
+                    item.classList.add('selected');
+                }
+            });
+            passwordForm.style.display = 'block';
+        }
+
+        function pairLocker() {
+            const password = document.getElementById('password').value;
+            if (!selectedMac || !password) {
+                alert('Veuillez sélectionner un locker et entrer un mot de passe');
+                return;
+            }
+
+            fetch('/api/pair', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    mac: selectedMac,
+                    password: password
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    alert('Échec de la connexion : ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Une erreur est survenue lors de la connexion');
+            });
+        }
+    </script>
+</body>
+</html> 

@@ -18,7 +18,6 @@ last_scan = None
 last_scan_time = 0
 last_processed_payload = None
 last_processed_time = 0
-last_mac_address = None  # Nouvelle variable pour stocker la dernière adresse MAC
 is_adding_badge = False  # Variable pour suivre si on est en mode ajout de badge
 
 def on_connect(client, userdata, flags, rc):
@@ -27,7 +26,7 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(MQTT_TOPIC_DOOR)
 
 def on_message(client, userdata, msg):
-    global last_scan, last_scan_time, last_processed_payload, last_processed_time, last_mac_address
+    global last_scan, last_scan_time, last_processed_payload, last_processed_time
     
     try:
         payload = msg.payload.decode()
@@ -59,7 +58,6 @@ def on_message(client, userdata, msg):
             
             last_scan = uid
             last_scan_time = time.time()
-            last_mac_address = mac_address  # Stocker la dernière adresse MAC
             print(f"Badge scanné: {payload}")
             
             with app.app_context():
@@ -126,7 +124,3 @@ def set_adding_badge_mode(enabled):
     global is_adding_badge
     is_adding_badge = enabled
     print(f"Mode ajout de badge: {'activé' if enabled else 'désactivé'}") 
-
-def get_last_mac_address():
-    """Retourne la dernière adresse MAC reçue"""
-    return last_mac_address 

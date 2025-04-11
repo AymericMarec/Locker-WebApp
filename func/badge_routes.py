@@ -3,22 +3,22 @@ from app import app
 from models.badge import Badge
 from extensions import db
 from func.mqtt_service import * 
-from func.mqtt_service import get_last_scan as mqtt_get_last_scan, get_last_mac_address
+from func.mqtt_service import get_last_scan as mqtt_get_last_scan
 
 mqtt_client = init_mqtt_client()
 
 @app.route('/badges')
 def list_badges():
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
+    if 'paired_mac' not in session:
+        return redirect(url_for('pairing'))
     
     badges = Badge.query.all()
     return render_template('badges.html', badges=badges)
 
 @app.route('/badges/add', methods=['POST'])
 def add_badge():
-    if not session.get('logged_in'):
-        return jsonify({"success": False, "error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"success": False, "error": "Non appairé"}), 401
     
     try:
         data = request.json
@@ -32,13 +32,13 @@ def add_badge():
         
         # Ajout normal d'un badge
         uid = data.get('uid')
-        description = data.get('description')
+        name = data.get('name')
         is_authorized = data.get('is_authorized', True)
         
         if not uid:
             return jsonify({"success": False, "error": "UID requis"}), 400
             
-        badge = Badge(uid=uid, description=description, is_authorized=is_authorized)
+        badge = Badge(uid=uid, name=name, is_authorized=is_authorized)
         db.session.add(badge)
         db.session.commit()
         
@@ -49,8 +49,8 @@ def add_badge():
 
 @app.route('/badges/<int:badge_id>/toggle', methods=['POST'])
 def toggle_badge(badge_id):
-    if not session.get('logged_in'):
-        return jsonify({"success": False, "error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"success": False, "error": "Non appairé"}), 401
     
     try:
         badge = Badge.query.get_or_404(badge_id)
@@ -63,8 +63,8 @@ def toggle_badge(badge_id):
 
 @app.route('/badges/<int:badge_id>/delete', methods=['POST'])
 def delete_badge(badge_id):
-    if not session.get('logged_in'):
-        return jsonify({"success": False, "error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"success": False, "error": "Non appairé"}), 401
     
     try:
         badge = Badge.query.get_or_404(badge_id)
@@ -77,16 +77,16 @@ def delete_badge(badge_id):
 
 @app.route('/last_scan')
 def get_last_scan():
-    if not session.get('logged_in'):
-        return jsonify({"error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"error": "Non appairé"}), 401
     
     last_scan = mqtt_get_last_scan()
     return jsonify({"uid": last_scan})
 
 @app.route('/publish', methods=['POST'])
 def publish_message():
-    if not session.get('logged_in'):
-        return jsonify({"error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"error": "Non appairé"}), 401
     
     try:
         data = request.json
@@ -103,11 +103,11 @@ def publish_message():
 
 @app.route('/door/close', methods=['POST'])
 def close_door():
-    if not session.get('logged_in'):
-        return jsonify({"error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"error": "Non appairé"}), 401
     
     try:
-        mac_address = get_last_mac_address()
+        mac_address = session.get('paired_mac')
         if not mac_address:
             return jsonify({"error": "Aucune adresse MAC disponible"}), 400
             
@@ -119,11 +119,11 @@ def close_door():
 
 @app.route('/door/open', methods=['POST'])
 def open_door():
-    if not session.get('logged_in'):
-        return jsonify({"error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"error": "Non appairé"}), 401
     
     try:
-        mac_address = get_last_mac_address()
+        mac_address = session.get('paired_mac')
         if not mac_address:
             return jsonify({"error": "Aucune adresse MAC disponible"}), 400
             

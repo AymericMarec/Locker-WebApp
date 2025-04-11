@@ -1,11 +1,11 @@
 from flask import jsonify, request, session
 from app import app
-from services.mqtt_service import mqtt_client, last_scan
+from services.mqtt_service import mqtt_client, last_scan, get_paired_mac
 
 @app.route('/publish', methods=['POST'])
 def publish_message():
-    if not session.get('logged_in'):
-        return jsonify({"success": False, "error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"success": False, "error": "Non appairé"}), 401
         
     try:
         data = request.json
@@ -14,6 +14,10 @@ def publish_message():
         
         if not topic or not message:
             return jsonify({"success": False, "error": "Topic et message requis"}), 400
+        
+        # Ajouter l'adresse MAC appairée au message si nécessaire
+        if topic == "scan":
+            message = f"{get_paired_mac()}|{message}"
         
         result = mqtt_client.publish(topic, message)
         
@@ -27,6 +31,6 @@ def publish_message():
 
 @app.route('/last_scan')
 def get_last_scan():
-    if not session.get('logged_in'):
-        return jsonify({"error": "Non authentifié"}), 401
+    if 'paired_mac' not in session:
+        return jsonify({"error": "Non appairé"}), 401
     return jsonify({"uid": last_scan}) 
