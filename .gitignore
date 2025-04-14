@@ -4,3 +4,5 @@
 # Docker data
 mysql-data/
 mosquitto/
+seeMessage.py
+mqtt_sender.py
