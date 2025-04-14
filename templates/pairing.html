@@ -104,6 +104,23 @@
         const macList = document.getElementById('macList');
         const passwordForm = document.getElementById('passwordForm');
 
+        // Fonction pour charger les lockers existants
+        function loadExistingLockers() {
+            fetch('/api/lockers')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateMacList(data.lockers);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur lors du chargement des lockers:', error);
+                });
+        }
+
+        // Charger les lockers au démarrage
+        loadExistingLockers();
+
         // Connexion WebSocket
         const ws = new WebSocket(`ws://${window.location.host}/ws/pairing`);
         
@@ -115,7 +132,7 @@
         };
 
         function updateMacList(macs) {
-            if (macs.length === 0) {
+            if (!macs || macs.length === 0) {
                 macList.innerHTML = `
                     <div class="text-center text-muted">
                         <i class="bi bi-exclamation-circle display-4"></i>
