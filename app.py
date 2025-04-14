@@ -57,20 +57,24 @@ def on_mqtt_message(client, userdata, message):
             if mac_address not in available_macs:
                 available_macs.add(mac_address)
                 print(f"MAC ajoutée à la liste des disponibles: {mac_address}")
-                print(f"Liste actuelle des MACs: {available_macs}")
-            
-            # Envoyer la liste mise à jour à tous les clients d'appairage
-            for client in pairing_clients.copy():
-                try:
-                    message_json = json.dumps({
-                        "type": "mac_list",
-                        "macs": list(available_macs)
-                    })
-                    print(f"Envoi de la liste des MACs au client: {message_json}")
-                    client.send(message_json)
-                except Exception as e:
-                    print(f"Erreur lors de l'envoi au client d'appairage: {str(e)}")
-                    pairing_clients.remove(client)
+                
+                # Récupérer aussi les lockers de la DB
+                db_lockers = Locker.query.all()
+                db_macs = {locker.mac_address for locker in db_lockers}
+                all_macs = list(db_macs.union(available_macs))
+                
+                # Envoyer la liste mise à jour à tous les clients d'appairage
+                for client in pairing_clients.copy():
+                    try:
+                        message_json = json.dumps({
+                            "type": "mac_list",
+                            "macs": all_macs
+                        })
+                        print(f"Envoi de la liste des MACs au client: {message_json}")
+                        client.send(message_json)
+                    except Exception as e:
+                        print(f"Erreur lors de l'envoi au client d'appairage: {str(e)}")
+                        pairing_clients.remove(client)
             return
         
         # Messages du topic response/{mac_address}
@@ -190,9 +194,16 @@ def handle_pairing_websocket(ws):
     
     # Envoyer la liste initiale des MACs
     try:
+        # Récupérer les lockers de la base de données
+        db_lockers = Locker.query.all()
+        db_macs = {locker.mac_address for locker in db_lockers}
+        
+        # Combiner avec les MACs détectées
+        all_macs = list(db_macs.union(available_macs))
+        
         message_json = json.dumps({
             "type": "mac_list",
-            "macs": list(available_macs)
+            "macs": all_macs
         })
         print(f"Envoi de la liste initiale des MACs: {message_json}")
         ws.send(message_json)
