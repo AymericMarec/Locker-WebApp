@@ -18,7 +18,7 @@ last_scan = None
 last_scan_time = 0
 last_processed_payload = None
 last_processed_time = 0
-is_adding_badge = False  # Variable pour suivre si on est en mode ajout de badge
+is_adding_badge = False  
 
 def on_connect(client, userdata, flags, rc):
     print("Connecté au broker MQTT")
@@ -44,14 +44,12 @@ def on_message(client, userdata, msg):
         last_processed_time = current_time
         
         if msg.topic == MQTT_TOPIC_DOOR:
-            # Gérer la commande de fermeture de porte
             if payload == MQTT_MSG_CLOSE:
                 print("Commande de fermeture de porte reçue")
                 return
 
         if msg.topic == MQTT_TOPIC_SCAN:
-            # Pour un scan de badge
-            # Extraire l'adresse MAC et l'UID
+      
             mac_address = payload.split('|')[0]
             uid = payload.split('|')[1]
             response_topic = f"{MQTT_TOPIC_RESPONSE}/{mac_address}"
@@ -61,7 +59,6 @@ def on_message(client, userdata, msg):
             print(f"Badge scanné: {payload}")
             
             with app.app_context():
-                # Vérifier si le badge existe déjà
                 badge = Badge.query.filter_by(uid=uid).first()
                 
                 if not badge:
@@ -82,7 +79,7 @@ def on_message(client, userdata, msg):
                             client.publish(response_topic, response, qos=1)
                             print(f"Réponse envoyée sur {response_topic}: {response}")
                     else:
-                        # Si on n'est pas en mode ajout, on refuse simplement l'accès
+                        # Si on n'est pas en mode ajout, on refuse l'accès
                         response = MQTT_MSG_DENIED
                         client.publish(response_topic, response, qos=1)
                         print(f"Badge inconnu, accès refusé: {uid}")
@@ -120,7 +117,6 @@ def get_last_scan():
     return last_scan 
 
 def set_adding_badge_mode(enabled):
-    """Active ou désactive le mode d'ajout de badge"""
     global is_adding_badge
     is_adding_badge = enabled
     print(f"Mode ajout de badge: {'activé' if enabled else 'désactivé'}") 

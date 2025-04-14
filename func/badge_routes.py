@@ -23,14 +23,12 @@ def add_badge():
     try:
         data = request.json
         if 'start_scan' in data:
-            # Activer/désactiver le mode scan
             set_adding_badge_mode(data['start_scan'])
             return jsonify({
                 "success": True, 
                 "message": "Mode scan " + ("activé" if data['start_scan'] else "désactivé")
             })
         
-        # Ajout normal d'un badge
         uid = data.get('uid')
         name = data.get('name')
         is_authorized = data.get('is_authorized', True)

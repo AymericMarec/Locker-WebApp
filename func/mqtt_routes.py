@@ -15,7 +15,6 @@ def publish_message():
         if not topic or not message:
             return jsonify({"success": False, "error": "Topic et message requis"}), 400
         
-        # Ajouter l'adresse MAC appairée au message si nécessaire
         if topic == "scan":
             message = f"{get_paired_mac()}|{message}"
         

@@ -17,11 +17,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://locker:root@loca
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
-# Liste des clients WebSocket connectés
 connected_clients = set()
 pairing_clients = set()
 
-# Configuration MQTT
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
 MQTT_TOPICS = {
@@ -30,16 +28,12 @@ MQTT_TOPICS = {
     "pair": "pair"
 }
 
-# Variable globale pour stocker l'état du coffre-fort
 safe_status = "closed"
 
-# Stockage des logs en mémoire (limité aux 100 derniers)
 activity_logs = deque(maxlen=100)
 
-# Stockage des adresses MAC reçues
 available_macs = set()
 
-# Gestionnaire des messages MQTT
 def on_mqtt_message(client, userdata, message):
     try:
         global safe_status
@@ -48,22 +42,18 @@ def on_mqtt_message(client, userdata, message):
         
         print(f"Message MQTT reçu - Topic: {topic}, Payload: {payload}")
         
-        # Messages du topic pair
         if topic == MQTT_TOPICS["pair"]:
             mac_address = payload
             print(f"Nouvelle adresse MAC détectée: {mac_address}")
             
-            # Ajouter à la liste des MAC disponibles
             if mac_address not in available_macs:
                 available_macs.add(mac_address)
                 print(f"MAC ajoutée à la liste des disponibles: {mac_address}")
                 
-                # Récupérer aussi les lockers de la DB
                 db_lockers = Locker.query.all()
                 db_macs = {locker.mac_address for locker in db_lockers}
                 all_macs = list(db_macs.union(available_macs))
                 
-                # Envoyer la liste mise à jour à tous les clients d'appairage
                 for client in pairing_clients.copy():
                     try:
                         message_json = json.dumps({
@@ -77,10 +67,8 @@ def on_mqtt_message(client, userdata, message):
                         pairing_clients.remove(client)
             return
         
-        # Messages du topic response/{mac_address}
         if topic.startswith(MQTT_TOPICS["response"].replace("/#", "/")):
             mac_address = topic.split('/')[-1]
-            # Vérifier si le message concerne un locker disponible
             if mac_address in available_macs:
                 if payload == "allowed":
                     status = "authorized"
@@ -105,7 +93,7 @@ def on_mqtt_message(client, userdata, message):
                 else:
                     return
             else:
-                return  # Ignorer les messages des lockers non disponibles
+                return  
         elif topic == MQTT_TOPICS["door"] and payload == "close":
             status = "closed"
             message_text = "Porte fermée"
@@ -162,13 +150,10 @@ def pair_locker():
     if not mac or not password:
         return jsonify({'success': False, 'message': 'Adresse MAC et mot de passe requis'})
     
-    # Vérification du mot de passe
-    if password == "admin123":  # À remplacer par votre logique d'authentification
+    if password == "admin123":  
         try:
-            # Vérifier si le locker existe déjà
             locker = Locker.query.filter_by(mac_address=mac).first()
             if not locker:
-                # Créer un nouveau locker
                 locker = Locker(mac_address=mac, name=f"Locker {mac}")
                 db.session.add(locker)
                 db.session.commit()
@@ -192,13 +177,11 @@ def handle_pairing_websocket(ws):
     pairing_clients.add(ws)
     print(f"Nombre de clients d'appairage connectés: {len(pairing_clients)}")
     
-    # Envoyer la liste initiale des MACs
     try:
         # Récupérer les lockers de la base de données
         db_lockers = Locker.query.all()
         db_macs = {locker.mac_address for locker in db_lockers}
         
-        # Combiner avec les MACs détectées
         all_macs = list(db_macs.union(available_macs))
         
         message_json = json.dumps({
@@ -224,10 +207,8 @@ def handle_pairing_websocket(ws):
 def serve_assets(path):
     return send_from_directory('assets', path)
 
-# Configuration du client MQTT
 mqtt_client = mqtt.Client()
 
-# Définition des callbacks MQTT
 def on_connect(client, userdata, flags, rc):
     print(f"Connecté au broker MQTT avec le code: {rc}")
     for topic in MQTT_TOPICS.values():
@@ -237,7 +218,6 @@ def on_connect(client, userdata, flags, rc):
 def on_disconnect(client, userdata, rc):
     print(f"Déconnecté du broker MQTT avec le code: {rc}")
 
-# Attribution des callbacks
 mqtt_client.on_connect = on_connect
 mqtt_client.on_disconnect = on_disconnect
 mqtt_client.on_message = on_mqtt_message
@@ -289,7 +269,6 @@ def save_badge():
         if not uid or not name:
             return jsonify({'error': 'UID et nom requis'}), 400
         
-        # Récupérer le locker actuellement appairé par son adresse MAC
         mac_address = session['paired_mac']
         locker = Locker.query.filter_by(mac_address=mac_address).first()
         
@@ -308,7 +287,6 @@ def save_badge():
         print(f"Erreur lors de la création du badge: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
-# Importer les routes après avoir configuré l'application
 from func.badge_routes import *
 
 if __name__ == '__main__':
